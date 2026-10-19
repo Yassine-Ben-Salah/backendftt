@@ -6,6 +6,7 @@ import rateLimit from 'express-rate-limit';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ensureSchema, pool } from './db/pool.js';
+import { syncAdminFromEnv } from './db/admin.js';
 import authRoutes from './routes/auth.js';
 import catalogRoutes from './routes/catalog.js';
 import quoteRoutes from './routes/quotes.js';
@@ -45,6 +46,7 @@ app.use(notFound);
 app.use(errorHandler);
 
 await ensureSchema();
+await syncAdminFromEnv();
 const server = app.listen(port, () => console.log(`API Food Transfert à l'écoute sur http://localhost:${port}`));
 
 function shutdown() {
