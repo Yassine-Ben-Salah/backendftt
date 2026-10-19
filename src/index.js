@@ -13,6 +13,8 @@ import adminRoutes from './routes/admin.js';
 import { errorHandler, notFound } from './middleware/errors.js';
 
 const app = express();
+// Render proxies requests to the service; trust one hop so rate limits use the client IP.
+app.set('trust proxy', 1);
 const port = Number(process.env.PORT || 4000);
 const currentDir = path.dirname(fileURLToPath(import.meta.url));
 const uploadsDir = path.resolve(currentDir, '../uploads');
