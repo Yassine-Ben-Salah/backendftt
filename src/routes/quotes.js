@@ -7,7 +7,10 @@ const router = Router();
 const quoteSchema = z.object({
   productId: z.preprocess((value) => value === '' || value === null ? null : value, z.coerce.number().int().positive().nullable().optional()),
   name: z.string().trim().min(2).max(120),
-  email: z.string().trim().email().max(254),
+  email: z.preprocess(
+    (value) => typeof value !== 'string' || !value.trim() ? null : value.trim(),
+    z.string().email().max(254).nullable()
+  ),
   phone: z.string().trim().min(6).max(40),
   quantity: z.preprocess((value) => typeof value !== 'string' || !value.trim() ? 'Non précisée' : value, z.string().trim().max(100)),
   message: z.string().trim().max(2000).default('')
@@ -27,9 +30,9 @@ async function sendNotification(quote, productName) {
   await transporter.sendMail({
     from: process.env.SMTP_FROM || process.env.SMTP_USER,
     to: process.env.SMTP_TO,
-    replyTo: quote.email,
+    ...(quote.email ? { replyTo: quote.email } : {}),
     subject: `Nouvelle demande d’information - ${quote.name}`,
-    text: `Client : ${quote.name}\nE-mail : ${quote.email}\nTéléphone : ${quote.phone}\nProduit : ${productName || 'Non précisé'}\nQuantité : ${quote.quantity}\nMessage : ${quote.message || 'Aucun message'}`
+    text: `Client : ${quote.name}\n${quote.email ? `E-mail : ${quote.email}\n` : ''}Téléphone : ${quote.phone}\nProduit : ${productName || 'Non précisé'}\nQuantité : ${quote.quantity}\nMessage : ${quote.message || 'Aucun message'}`
   });
   return true;
 }
@@ -48,7 +51,7 @@ router.post('/', async (req, res, next) => {
     const result = await pool.query(`
       INSERT INTO quote_requests (product_id, name, company, email, phone, quantity, message)
       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id
-    `, [quote.productId || null, quote.name, 'Particulier', quote.email.toLowerCase(), quote.phone, quote.quantity, quote.message]);
+    `, [quote.productId || null, quote.name, 'Particulier', quote.email?.toLowerCase() || null, quote.phone, quote.quantity, quote.message]);
     let emailSent = false;
     try {
       emailSent = await sendNotification(quote, productName);

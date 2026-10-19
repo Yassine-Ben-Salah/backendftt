@@ -28,13 +28,14 @@ export async function ensureSchema() {
       product_id INTEGER REFERENCES products(id) ON DELETE SET NULL,
       name TEXT NOT NULL,
       company TEXT NOT NULL,
-      email TEXT NOT NULL,
+      email TEXT,
       phone TEXT NOT NULL,
       quantity TEXT NOT NULL,
       message TEXT NOT NULL DEFAULT '',
       status TEXT NOT NULL DEFAULT 'new' CHECK (status IN ('new', 'contacted', 'closed')),
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
+    ALTER TABLE quote_requests ALTER COLUMN email DROP NOT NULL;
     CREATE TABLE IF NOT EXISTS admins (
       id SERIAL PRIMARY KEY,
       email TEXT NOT NULL UNIQUE,
